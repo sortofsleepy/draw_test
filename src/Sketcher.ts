@@ -9,14 +9,24 @@ class DrawSegment {
     }
 
     color:Array<number> = [255,0,0];
+    colorString:string = ""
 
     opacity:number = 1;
 
-    constructor(x,y) {
+    // whether or not this segment should be purged
+    shouldDelete:boolean = false;
 
+    constructor(x,y) {
         this.mouse.x = x;
         this.mouse.y = y;
+        this.colorString = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.opacity})`
+    }
 
+    setColor(r,g,b){
+        this.color[0] = r;
+        this.color[1] = g;
+        this.color[2] = b;
+        this.colorString = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.opacity})`
     }
 
     render(ctx){
@@ -31,6 +41,10 @@ class DrawSegment {
         ctx.arc(this.mouse.x,this.mouse.y,ctx.lineWidth / 2,0,2 * Math.PI)
         ctx.fill();
         ctx.closePath();
+
+        if(this.opacity === 0.0){
+            this.shouldDelete = true;
+        }
     }
 }
 
@@ -85,6 +99,13 @@ export default class Sketcher {
 
 
             }
+
+            // check to see if anything should be purged
+            this.drawings.forEach((draw,i) => {
+                if(draw.shouldDelete){
+                    this.drawings.splice(i,1)
+                }
+            });
 
             this.mouse.lastX = this.mouse.x;
             this.mouse.lastY = this.mouse.y;
