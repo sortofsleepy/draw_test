@@ -29,7 +29,7 @@
 
             // add color options
             let palette = {
-                color: '#FF0000'
+                color: [255,0,0]
             }
 
             let c = gui.addColor(palette, 'color');

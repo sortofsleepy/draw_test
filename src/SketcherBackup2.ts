@@ -10,12 +10,12 @@ class DrawSegment {
 
     settings:any = {
         lineWidth:3,
-        fillColor:[255,0,0],
-        strokeColor:[255,0,0]
+        fillStyle:"#000",
+        strokeStyle:"#000"
     }
 
-
-    decayRate:number = 0.01;
+    color:Array<number> = [255,0,0];
+    colorString:string = ""
 
     opacity:number = 1;
 
@@ -27,37 +27,38 @@ class DrawSegment {
     constructor(x,y) {
         this.mouse.x = x;
         this.mouse.y = y;
-
+        this.colorString = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.opacity})`
     }
 
 
 
     setColor(r,g,b){
-        this.settings.fillColor[0] = r;
-        this.settings.fillColor[1] = g;
-        this.settings.fillColor[2] = b;
-
-        this.settings.strokeColor[0] = r;
-        this.settings.strokeColor[1] = g;
-        this.settings.strokeColor[2] = b;
+        this.color[0] = r;
+        this.color[1] = g;
+        this.color[2] = b;
+        this.colorString = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.opacity})`
+    }
+    setStrokeStyle(style){
+        this.settings.strokeStyle = style;
     }
 
     setLineWidth(width){
         this.settings.lineWidth = width;
     }
 
-
+    setFillStyle(style){
+        this.settings.fillStyle = style;
+    }
     render(ctx){
 
         let alpha = this.opacity
-
-        if(this.fade){
-            alpha = this.opacity - this.decayRate;
+        if (this.fade) {
+            alpha = this.opacity - .01
             this.opacity = alpha
-
 
         }
 
+        this.opacity = 1;
 
         //// APPLY CURRENT SETTINGS /////
         let lineWidth = this.settings.lineWidth;
@@ -65,8 +66,6 @@ class DrawSegment {
         let strokeStyle = this.settings.strokeStyle;
 
 
-        ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity})`
-        ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity})`
         ctx.lineWidth = lineWidth;
 
         //// START DRAWING /////
@@ -74,12 +73,14 @@ class DrawSegment {
 
         ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
         ctx.lineTo(this.mouse.x,this.mouse.y);
+        ctx.strokeStyle = `rgba(200,0,0,${this.opacity})`
         ctx.stroke();
         ctx.closePath();
 
         // helps fill in the gaps since lineTo creates breaks with larger widths.
         ctx.beginPath();
 
+        ctx.fillStyle = `rgba(200,0,0,${this.opacity})`
         ctx.arc(this.mouse.x,this.mouse.y,ctx.lineWidth / 2,0,2 * Math.PI)
         ctx.fill();
         ctx.closePath();
@@ -105,14 +106,6 @@ export default class Sketcher {
 
     drawings:Array<DrawSegment> = [];
 
-    styles:any = {
-        fillStyle:"#000",
-        strokeStyle:"#000",
-        lineWidth:0
-    }
-
-    decayRateSettings:number = 0.06
-
     constructor(el:HTMLCanvasElement) {
 
         this.el = el;
@@ -136,15 +129,6 @@ export default class Sketcher {
         let render = () => {
 
             this.ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
-
-            // make sure we splice out any segments that have faded out already.
-            this.drawings.forEach((drawing,i) => {
-                if(drawing.opacity < 0){
-                    this.drawings.splice(i,1)
-                }
-            })
-
-            // render all remaining drawings.
             this.drawings.forEach((draw,i) => {
                 draw.render(this.ctx);
             });
@@ -164,16 +148,22 @@ export default class Sketcher {
         window.addEventListener("pointerdown",e =>{
 
 
-            if(e.target["id"] === "CANVAS") {
-
-
+            if(e.target["id"] === "CANVAS"){
                 this.mouse.isDown = true;
+                let segment = new DrawSegment(this.mouse.x,this.mouse.y);
+                segment.mouse.lastX = this.mouse.lastX;
+                segment.mouse.lastY = this.mouse.lastY;
 
-                // apply current global styles
-                for (let i in this.styles) {
-                    this.styles[i] = window["settings"][i];
-                }
+                // get current drawing settings
+                let lineWidth = window["settings"].lineWidth;
+                let fillStyle = window["settings"].fillStyle;
+                let strokeStyle = window["settings"].strokeStyle;
 
+                segment.setLineWidth(lineWidth);
+                segment.setFillStyle(fillStyle);
+                segment.setStrokeStyle(strokeStyle)
+
+                this.drawings.push(segment);
             }
 
 
@@ -185,21 +175,8 @@ export default class Sketcher {
             let y = this.mouse.y;
 
             if(this.mouse.isDown){
-                let segment = new DrawSegment(this.mouse.x,this.mouse.y);
-                segment.mouse.lastX = this.mouse.lastX;
-                segment.mouse.lastY = this.mouse.lastY;
 
-                segment.decayRate = this.decayRateSettings - 0.000000001;
-                segment.setLineWidth(this.styles.lineWidth);
-                segment.setColor(
-                    this.styles.fillStyle[0],
-                    this.styles.fillStyle[1],
-                    this.styles.fillStyle[2]
-                )
-
-                this.drawings.push(segment);
-
-                segment = this.drawings[this.drawings.length - 1];
+                let segment = this.drawings[this.drawings.length - 1];
                 segment.mouse.lastX = this.mouse.lastX;
                 segment.mouse.lastY = this.mouse.lastY;
 
@@ -211,16 +188,9 @@ export default class Sketcher {
 
         window.addEventListener("pointerup",()=>{
 
-
+            this.drawings[this.drawings.length - 1].fade = true;
             this.mouse.isDown = false;
 
-            this.decayRateSettings = 0.06;
-            // go through and slowly start to fade all the segments out
-            this.drawings.forEach((drawing,i) => {
-                drawing.fade = true;
-            })
-
-            console.log(this.drawings);
 
             /*
              // get the last drawing set and set the last x,y pos
