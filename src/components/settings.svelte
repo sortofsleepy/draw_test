@@ -11,11 +11,7 @@
         fillStyle:"#000",
         strokeStyle:"#000",
         lineWidth:40,
-
-
-        // if true, on the next mouse down a straight line will be drawn from previous
-        // mouse up to new mouse down position.
-        snapToPoint:false
+        decayRate:0.001,
     }
 
     onMount(()=>{
@@ -32,11 +28,14 @@
                 color: [255,0,0]
             }
 
+            // add line / stroke color
             let c = gui.addColor(palette, 'color');
             let isMouseDown = false;
 
-            window.addEventListener("mousemove",() => {
+            // add line decay rate
+            gui.add(window["settings"],"decayRate",0.0000001,0.01,0.001);
 
+            window.addEventListener("mousemove",() => {
                 window["settings"].strokeStyle = palette["color"];
                 window["settings"].fillStyle = palette["color"];
             })
@@ -49,17 +48,7 @@
                 isMouseDown = false;
             })
 
-            let anim = () => {
-                requestAnimationFrame(anim);
 
-                if(window["settings"].globalAlpha > 0){
-                    window["settings"].globalAlpha -= 0.3;
-                }
-
-                //console.log("global alpha is ", window.settings.globalAlpha);
-            }
-
-            anim();
         }
 
 

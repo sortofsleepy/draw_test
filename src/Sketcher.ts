@@ -89,6 +89,8 @@ class DrawSegment {
 
 }
 
+const defaultDecay = 0;
+
 export default class Sketcher {
 
     el:HTMLCanvasElement;
@@ -104,6 +106,7 @@ export default class Sketcher {
     }
 
     drawings:Array<DrawSegment> = [];
+    decaySettings:Array<number> = [];
 
     styles:any = {
         fillStyle:"#000",
@@ -111,7 +114,7 @@ export default class Sketcher {
         lineWidth:0
     }
 
-    decayRateSettings:number = 0.06
+    decayRateSettings:number = defaultDecay;
 
     constructor(el:HTMLCanvasElement) {
 
@@ -185,11 +188,18 @@ export default class Sketcher {
             let y = this.mouse.y;
 
             if(this.mouse.isDown){
+
+                // decay increments from 0 to 1-ish.
+                // we then store it cause we assign the values on mouse up,
+                // we need to reverse first so we do it for this reason.
+                // We can't start at 1 and go down because we might hit values < 0 otherwise.
+                this.decayRateSettings += window["settings"]["decayRate"];
+                this.decaySettings.push(this.decayRateSettings);
+
                 let segment = new DrawSegment(this.mouse.x,this.mouse.y);
                 segment.mouse.lastX = this.mouse.lastX;
                 segment.mouse.lastY = this.mouse.lastY;
 
-                segment.decayRate = this.decayRateSettings - 0.000000001;
                 segment.setLineWidth(this.styles.lineWidth);
                 segment.setColor(
                     this.styles.fillStyle[0],
@@ -214,13 +224,22 @@ export default class Sketcher {
 
             this.mouse.isDown = false;
 
-            this.decayRateSettings = 0.06;
+            // set the decay settings
+            this.decaySettings.reverse();
+
+            this.decaySettings.forEach((itm,i) => {
+                this.drawings[i].decayRate = itm
+            })
+
+            this.decaySettings = [];
+            this.decayRateSettings = defaultDecay;
+
+
             // go through and slowly start to fade all the segments out
             this.drawings.forEach((drawing,i) => {
                 drawing.fade = true;
             })
 
-            console.log(this.drawings);
 
             /*
              // get the last drawing set and set the last x,y pos
