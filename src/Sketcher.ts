@@ -1,29 +1,34 @@
 
 
-class DrawInstance {
-    x:number = 0;
-    y:number = 0;
-    lastX:number = 0;
-    lastY:number = 0;
+class DrawSegment {
+    mouse:any = {
+        x:0,
+        y:0,
+        lastX:0,
+        lastY:0
+    }
+
+    color:Array<number> = [255,0,0];
+
     opacity:number = 1;
 
     constructor(x,y) {
 
-        this.x = x;
-        this.y = y;
+        this.mouse.x = x;
+        this.mouse.y = y;
 
     }
 
     render(ctx){
         ctx.beginPath();
-        ctx.moveTo(this.lastX,this.lastY);
-        ctx.lineTo(this.x,this.y);
+        ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
+        ctx.lineTo(this.mouse.x,this.mouse.y);
         ctx.stroke();
         ctx.closePath();
 
         // helps fill in the gaps since lineTo creates breaks with larger widths.
         ctx.beginPath();
-        ctx.arc(this.x,this.y,ctx.lineWidth / 2,0,2 * Math.PI)
+        ctx.arc(this.mouse.x,this.mouse.y,ctx.lineWidth / 2,0,2 * Math.PI)
         ctx.fill();
         ctx.closePath();
     }
@@ -43,7 +48,7 @@ export default class Sketcher {
         isDown:false
     }
 
-    drawings:Array<DrawInstance> = [];
+    drawings:Array<DrawSegment> = [];
 
     constructor(el:HTMLCanvasElement) {
 
@@ -62,24 +67,33 @@ export default class Sketcher {
         this.mouse.y = y;
     }
 
+
     start(){
 
+        let ctx = this.ctx;
         let render = () => {
             requestAnimationFrame(render);
             this._applyDrawSettings();
 
 
             if(this.mouse.isDown){
+
+
                 this.drawings.forEach((draw,i) => {
                     draw.render(this.ctx);
                 });
+
+
             }
 
+            this.mouse.lastX = this.mouse.x;
+            this.mouse.lastY = this.mouse.y;
         };
 
         this.animateId = requestAnimationFrame(render);
     }
 
+    // TODO this should be per-segment settings rather than global
     _applyDrawSettings(){
 
         let lineWidth = window["settings"].lineWidth;
@@ -93,24 +107,26 @@ export default class Sketcher {
 
         window.addEventListener("pointerdown",()=>{
             this.mouse.isDown = true;
+            let segment = new DrawSegment(this.mouse.x,this.mouse.y);
+            segment.mouse.lastX = this.mouse.lastX;
+            segment.mouse.lastY = this.mouse.lastY;
 
+            this.drawings.push(segment);
         });
+
         window.addEventListener("pointermove",()=>{
 
             let x = this.mouse.x ;
             let y = this.mouse.y;
 
             if(this.mouse.isDown){
-                this.drawings.push(new DrawInstance(x,y));
-                let lastLastSet = this.drawings[this.drawings.length - 2];
-                let lastSet = this.drawings[this.drawings.length - 1];
 
+                let segment = this.drawings[this.drawings.length - 1];
+                segment.mouse.lastX = this.mouse.lastX;
+                segment.mouse.lastY = this.mouse.lastY;
 
-                if(lastLastSet !== undefined){
-                    lastSet.lastX = lastLastSet.x;
-                    lastSet.lastY = lastLastSet.y;
-                }
-
+                segment.mouse.x = x;
+                segment.mouse.y = y;
             }
 
         });
