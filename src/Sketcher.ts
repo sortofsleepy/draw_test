@@ -8,6 +8,12 @@ class DrawSegment {
         lastY:0
     }
 
+    settings:any = {
+        lineWidth:3,
+        fillStyle:"#000",
+        strokeStyle:"#000"
+    }
+
     color:Array<number> = [255,0,0];
     colorString:string = ""
 
@@ -22,14 +28,34 @@ class DrawSegment {
         this.colorString = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.opacity})`
     }
 
+
+
     setColor(r,g,b){
         this.color[0] = r;
         this.color[1] = g;
         this.color[2] = b;
         this.colorString = `rgba(${this.color[0]},${this.color[1]},${this.color[2]},${this.opacity})`
     }
+    setStrokeStyle(style){
+        this.settings.strokeStyle = style;
+    }
 
+    setLineWidth(width){
+        this.settings.lineWidth = width;
+    }
+
+    setFillStyle(style){
+        this.settings.fillStyle = style;
+    }
     render(ctx){
+        let lineWidth = this.settings.lineWidth;
+        let fillStyle = this.settings.fillStyle;
+        let strokeStyle = this.settings.strokeStyle;
+
+        ctx.lineWidth = lineWidth;
+        ctx.fillStyle = fillStyle;
+        ctx.strokeStyle = strokeStyle;
+
         ctx.beginPath();
         ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
         ctx.lineTo(this.mouse.x,this.mouse.y);
@@ -87,7 +113,6 @@ export default class Sketcher {
         let ctx = this.ctx;
         let render = () => {
             requestAnimationFrame(render);
-            this._applyDrawSettings();
 
 
             if(this.mouse.isDown){
@@ -126,13 +151,28 @@ export default class Sketcher {
 
     _setupMouseListeners(){
 
-        window.addEventListener("pointerdown",()=>{
-            this.mouse.isDown = true;
-            let segment = new DrawSegment(this.mouse.x,this.mouse.y);
-            segment.mouse.lastX = this.mouse.lastX;
-            segment.mouse.lastY = this.mouse.lastY;
+        window.addEventListener("pointerdown",e =>{
 
-            this.drawings.push(segment);
+
+            if(e.target.id === "CANVAS"){
+                this.mouse.isDown = true;
+                let segment = new DrawSegment(this.mouse.x,this.mouse.y);
+                segment.mouse.lastX = this.mouse.lastX;
+                segment.mouse.lastY = this.mouse.lastY;
+
+                // get current drawing settings
+                let lineWidth = window["settings"].lineWidth;
+                let fillStyle = window["settings"].fillStyle;
+                let strokeStyle = window["settings"].strokeStyle;
+
+                segment.setLineWidth(lineWidth);
+                segment.setFillStyle(fillStyle);
+                segment.setStrokeStyle(strokeStyle)
+
+                this.drawings.push(segment);
+            }
+
+
         });
 
         window.addEventListener("pointermove",()=>{
