@@ -4,7 +4,7 @@
 </section>
 
 <script>
-    import * as dat from "dat.gui"
+
     import {onMount} from 'svelte'
 
     window["settings"] = {
