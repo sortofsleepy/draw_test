@@ -55,7 +55,12 @@ class DrawSegment {
             alpha = this.opacity - this.decayRate;
             this.opacity = alpha
 
-
+            // try to "erase" the lines as the lines are drawn
+            // to attempt to better hide things.
+            setTimeout(()=>{
+                ctx.clearRect(this.mouse.lastX,this.mouse.lastY-15,30,30);
+                ctx.clearRect(this.mouse.x-15,this.mouse.y-15,30,30);
+            })
         }
 
 
@@ -65,16 +70,18 @@ class DrawSegment {
         let strokeStyle = this.settings.strokeStyle;
 
 
+
+        ctx.globalCompositeOperation = "source-over"
         ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity})`
         ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity})`
         ctx.lineWidth = lineWidth;
 
+        if(window["settings"]["capsOn"]){
+            //ctx.lineCap = "round";
+            ctx.lineJoin = "square"
+        }
+
         //// START DRAWING /////
-        ctx.beginPath();
-        ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
-        ctx.lineTo(this.mouse.x,this.mouse.y);
-        ctx.stroke();
-        ctx.closePath();
 
         ctx.beginPath();
         ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
@@ -82,6 +89,14 @@ class DrawSegment {
         ctx.stroke();
         ctx.closePath();
 
+        ctx.globalCompositeOperation = "saturation"
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(255,255,255,0.1)`
+        ctx.lineWidth = lineWidth + 10;
+        ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
+        ctx.lineTo(this.mouse.x,this.mouse.y);
+        ctx.stroke();
+        ctx.closePath();
 
 
         // helps fill in the gaps since lineTo creates breaks with larger widths.
@@ -158,6 +173,7 @@ export default class Sketcher {
 
             // render all remaining drawings.
             this.drawings.forEach((draw,i) => {
+
                 draw.render(this.ctx);
             });
 
@@ -216,8 +232,8 @@ export default class Sketcher {
                 // we then store it cause we assign the values on mouse up,
                 // we need to reverse first so we do it for this reason.
                 // We can't start at 1 and go down because we might hit values < 0 otherwise.
-                this.decayRateSettings += 1 / this.drawings.length;
-                this.decaySettings.push(this.decayRateSettings * 0.005);
+                this.decayRateSettings += 1 / (this.drawings.length)
+                this.decaySettings.push(this.decayRateSettings * 0.01);
 
 
             }
@@ -231,6 +247,9 @@ export default class Sketcher {
 
             // set the decay settings
             this.decaySettings.reverse();
+
+            // boost the speed a bit of the last few items that need to fade
+            this.decaySettings[this.decaySettings.length-1] += 0.001;
 
             this.decaySettings.forEach((itm,i) => {
                 this.drawings[i].decayRate = itm

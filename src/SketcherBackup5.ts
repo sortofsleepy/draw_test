@@ -65,25 +65,37 @@ class DrawSegment {
         let strokeStyle = this.settings.strokeStyle;
 
 
+        ctx.globalCompositeOperation = "saturation";
         ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity})`
         ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity})`
         ctx.lineWidth = lineWidth;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round"
 
         //// START DRAWING /////
-        ctx.beginPath();
 
+        ctx.beginPath();
         ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
         ctx.lineTo(this.mouse.x,this.mouse.y);
         ctx.stroke();
         ctx.closePath();
 
-        // helps fill in the gaps since lineTo creates breaks with larger widths.
         ctx.beginPath();
+        ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
+        ctx.lineTo(this.mouse.x,this.mouse.y);
+        ctx.stroke();
+        ctx.closePath();
 
+
+        // helps fill in the gaps since lineTo creates breaks with larger widths.
+
+        /*
+        ctx.beginPath();
         ctx.arc(this.mouse.x,this.mouse.y,ctx.lineWidth / 2,0,2 * Math.PI)
         ctx.fill();
         ctx.closePath();
 
+         */
 
     }
 
@@ -137,7 +149,7 @@ export default class Sketcher {
     start(){
 
         let render = () => {
-
+            this.ctx.globalCompositeOperation = "destination-over";
             this.ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
 
             // make sure we splice out any segments that have faded out already.
@@ -149,6 +161,7 @@ export default class Sketcher {
 
             // render all remaining drawings.
             this.drawings.forEach((draw,i) => {
+                //this.ctx.clearRect(draw.mouse.x-15,draw.mouse.y-15,30,30);
                 draw.render(this.ctx);
             });
 
@@ -189,12 +202,6 @@ export default class Sketcher {
 
             if(this.mouse.isDown){
 
-                // decay increments from 0 to 1-ish.
-                // we then store it cause we assign the values on mouse up,
-                // we need to reverse first so we do it for this reason.
-                // We can't start at 1 and go down because we might hit values < 0 otherwise.
-                this.decayRateSettings += window["settings"]["decayRate"];
-                this.decaySettings.push(this.decayRateSettings);
 
                 let segment = new DrawSegment(this.mouse.x,this.mouse.y);
                 segment.mouse.lastX = this.mouse.lastX;
@@ -209,12 +216,14 @@ export default class Sketcher {
 
                 this.drawings.push(segment);
 
-                segment = this.drawings[this.drawings.length - 1];
-                segment.mouse.lastX = this.mouse.lastX;
-                segment.mouse.lastY = this.mouse.lastY;
+                // decay increments from 0 to 1-ish.
+                // we then store it cause we assign the values on mouse up,
+                // we need to reverse first so we do it for this reason.
+                // We can't start at 1 and go down because we might hit values < 0 otherwise.
+                this.decayRateSettings += 1 / (this.drawings.length)
+                this.decaySettings.push(this.decayRateSettings * 0.01);
 
-                segment.mouse.x = x;
-                segment.mouse.y = y;
+
             }
 
         });
@@ -227,18 +236,24 @@ export default class Sketcher {
             // set the decay settings
             this.decaySettings.reverse();
 
+            // boost the speed a bit of the last few items that need to fade
+            this.decaySettings[this.decaySettings.length-1] += 0.001;
+
             this.decaySettings.forEach((itm,i) => {
                 this.drawings[i].decayRate = itm
             })
-
-            this.decaySettings = [];
-            this.decayRateSettings = defaultDecay;
 
 
             // go through and slowly start to fade all the segments out
             this.drawings.forEach((drawing,i) => {
                 drawing.fade = true;
+
+
             })
+
+            console.log(this.decaySettings)
+            this.decaySettings = [];
+            this.decayRateSettings = defaultDecay;
 
 
             /*

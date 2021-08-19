@@ -12,6 +12,7 @@
         strokeStyle:"#000",
         lineWidth:4,
         decayRate:0.001,
+        capsOn:false
     }
 
     onMount(()=>{
@@ -21,7 +22,7 @@
             const gui = new dat.GUI();
 
             // add line width
-            gui.add(window["settings"],"lineWidth",0,40);
+            gui.add(window["settings"],"lineWidth",1,5);
 
             // add color options
             let palette = {
@@ -32,8 +33,11 @@
             let c = gui.addColor(palette, 'color');
             let isMouseDown = false;
 
+
+            gui.add(window["settings"],"capsOn").name("Toggle End Caps on line segments")
+
             // add line decay rate
-            gui.add(window["settings"],"decayRate",0.0000001,0.01,0.001);
+            //gui.add(window["settings"],"decayRate",0.0000001,0.01,0.001);
 
             window.addEventListener("mousemove",() => {
                 window["settings"].strokeStyle = palette["color"];
