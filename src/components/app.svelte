@@ -1,8 +1,7 @@
 <main>
 
-    <Settings/>
-    <Content/>
-    <canvas id="CANVAS" bind:this={canvas}></canvas>
+
+    <Final/>
 </main>
 
 <style>
@@ -13,6 +12,8 @@
 
     canvas {
         position: absolute;
+        width:100vw;
+        height:100vh;
         top:0;
         left:0;
     }
@@ -22,30 +23,16 @@
 
     import {onMount} from 'svelte'
     import Sketcher from "../Sketcher";
+    import Final from "./final.svelte"
+    import Test2 from "./test2.svelte"
+    import Test3 from "./test3.svelte"
+    import Test4 from "./test4.svelte"
     import Settings from "./settings.svelte"
     import Content from "./content.svelte"
-    let canvas;
-    let sketch;
 
 
 
-    onMount(()=>{
-
-        sketch = new Sketcher(canvas);
-        sketch.start();
-
-        canvas.addEventListener("pointermove", e => {
-            const rect = canvas.getBoundingClientRect();
-            let x = e["clientX"] - rect.left;
-            let y = e["clientY"] - rect.top;
-            sketch.setMousePosition(x,y);
-        })
 
 
-        canvas.addEventListener("mousedown", e=> {
-
-        })
-
-    })
 
 </script>
