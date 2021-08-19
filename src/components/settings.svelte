@@ -10,7 +10,7 @@
     window["settings"] = {
         fillStyle:"#000",
         strokeStyle:"#000",
-        lineWidth:40,
+        lineWidth:4,
         decayRate:0.001,
     }
 
