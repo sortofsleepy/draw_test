@@ -58,8 +58,17 @@ class DrawSegment {
             // try to "erase" the lines as the lines are drawn
             // to attempt to better hide things.
             setTimeout(()=>{
-                ctx.clearRect(this.mouse.lastX,this.mouse.lastY-15,30,30);
-                ctx.clearRect(this.mouse.x-15,this.mouse.y-15,30,30);
+                let dx = this.mouse.x - this.mouse.lastX;
+                let dy = this.mouse.y - this.mouse.lastY;
+
+                let dx2 = dx + dx;
+                let dy2 = dy + dy;
+
+                //ctx.clearRect(this.mouse.lastX-(dx2 / 2), this.mouse.lastY - (dy2 / 2), dx2 * 2000, dy2)
+                ctx.clearRect(this.mouse.lastX+(dx2 / 2), this.mouse.lastY + (dy2 / 2), dx2, dy2)
+                ctx.clearRect(this.mouse.lastX-(dx2 / 2), this.mouse.lastY - (dy2 / 2), dx2, dy2)
+                ctx.clearRect(this.mouse.x+(dx2 / 2), this.mouse.y + (dy2 / 2), dx2, dy2)
+                ctx.clearRect(this.mouse.x-(dx2 / 2), this.mouse.y - (dy2 / 2), dx2, dy2)
             })
         }
 
@@ -71,15 +80,19 @@ class DrawSegment {
 
 
 
-        ctx.globalCompositeOperation = "source-over"
+        // hiding caps for now
+        if(window["settings"]["capsOn"]){
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round"
+        }else{
+            ctx.lineCap = "butt";
+            ctx.lineJoin = "round"
+        }
+
+        //ctx.globalCompositeOperation = "source-over"
         ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity})`
         ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity})`
         ctx.lineWidth = lineWidth;
-
-        if(window["settings"]["capsOn"]){
-            //ctx.lineCap = "round";
-            ctx.lineJoin = "square"
-        }
 
         //// START DRAWING /////
 
@@ -89,18 +102,23 @@ class DrawSegment {
         ctx.stroke();
         ctx.closePath();
 
-        ctx.globalCompositeOperation = "saturation"
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(255,255,255,0.1)`
-        ctx.lineWidth = lineWidth + 10;
-        ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
         ctx.lineTo(this.mouse.x,this.mouse.y);
+        ctx.moveTo(this.mouse.lastX,this.mouse.lastY);
         ctx.stroke();
         ctx.closePath();
 
-
-        // helps fill in the gaps since lineTo creates breaks with larger widths.
-
+        // turn on custom capping if capsOn if off.
+        if(!window["settings"]["capsOn"]){
+            ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity -.28})`
+            ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity-.23})`
+            //ctx.globalCompositeOperation = "screen";
+            ctx.globalCompositeOperation = "multiply"
+            ctx.beginPath();
+            ctx.arc(this.mouse.x,this.mouse.y,(this.settings.lineWidth / 2) + 0.2,0,2 * Math.PI)
+            ctx.fill();
+            ctx.closePath();
+        }
         /*
         ctx.beginPath();
         ctx.arc(this.mouse.x,this.mouse.y,ctx.lineWidth / 2,0,2 * Math.PI)
@@ -146,6 +164,7 @@ export default class Sketcher {
 
         this.el.width = window.innerWidth;
         this.el.height = window.innerHeight;
+        //this.ctx = this.el.getContext("2d",{alpha:false});
         this.ctx = this.el.getContext("2d");
 
         this._setupMouseListeners();
@@ -162,7 +181,8 @@ export default class Sketcher {
 
         let render = () => {
 
-            this.ctx.clearRect(0,0,window.innerWidth,window.innerHeight);
+           this.ctx.clearRect(0,0,this.el.width,this.el.height);
+
 
             // make sure we splice out any segments that have faded out already.
             this.drawings.forEach((drawing,i) => {
@@ -228,12 +248,7 @@ export default class Sketcher {
 
                 this.drawings.push(segment);
 
-                // decay increments from 0 to 1-ish.
-                // we then store it cause we assign the values on mouse up,
-                // we need to reverse first so we do it for this reason.
-                // We can't start at 1 and go down because we might hit values < 0 otherwise.
-                this.decayRateSettings += 1 / (this.drawings.length)
-                this.decaySettings.push(this.decayRateSettings * 0.01);
+
 
 
             }
@@ -244,38 +259,47 @@ export default class Sketcher {
 
 
             this.mouse.isDown = false;
+            ///////////////////////// GENERATE FADE SETTINGS ///////////////////////////////////
+            // decay increments from 0 to 1-ish.
+            // we then store it cause we assign the values on mouse up,
+            // we need to reverse first so we do it for this reason.
+            // We can't start at 1 and go down because we might hit values < 0 otherwise which seems to cause issues
+            this.drawings.forEach(draw => {
+                this.decayRateSettings += 1 / (this.drawings.length)
+                this.decaySettings.push(this.decayRateSettings * 0.1);
+            })
 
-            // set the decay settings
+            // reverse so fastest first - latest mouse movement should be slower so put slower
+            // values at the end.
             this.decaySettings.reverse();
 
             // boost the speed a bit of the last few items that need to fade
+            // TODO longer line is longer it will take for last segments to fade, maybe need to limit line to some extent.
             this.decaySettings[this.decaySettings.length-1] += 0.001;
+            this.decaySettings[this.decaySettings.length-2] += 0.0001;
 
             this.decaySettings.forEach((itm,i) => {
                 this.drawings[i].decayRate = itm
             })
 
+            ////////////////////////////////////////////////////////////
 
             // go through and slowly start to fade all the segments out
             this.drawings.forEach((drawing,i) => {
+
+                // seems to help "slightly"
+                /*
+                  this.ctx.globalCompositeOperation = "screen"
+                this.ctx.fillStyle = "rgba(255,255,255,0.2)"
+                this.ctx.fillRect(drawing.mouse.lastX-15,drawing.mouse.lastY- 15,40,40)
+                this.ctx.fillRect(drawing.mouse.x-15,drawing.mouse.y- 15,40,40)
+
+                 */
                 drawing.fade = true;
-
-
             })
 
-            console.log(this.decaySettings)
             this.decaySettings = [];
             this.decayRateSettings = defaultDecay;
-
-
-            /*
-             // get the last drawing set and set the last x,y pos
-            let lastSet = this.drawings[this.drawings.length - 1];
-            lastSet.lastX = this.mouse.x;
-            lastSet.lastY = this.mouse.y;
-            this.drawings[this.drawings.length - 1] = lastSet;
-             */
-
 
         });
 

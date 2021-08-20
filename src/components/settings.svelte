@@ -22,7 +22,7 @@
             const gui = new dat.GUI();
 
             // add line width
-            gui.add(window["settings"],"lineWidth",1,5);
+            gui.add(window["settings"],"lineWidth",1,10);
 
             // add color options
             let palette = {
