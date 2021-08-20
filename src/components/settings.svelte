@@ -20,7 +20,9 @@
 
 
         if(document.querySelectorAll(".dg").length <= 0){
-            const gui = new dat.GUI();
+            const gui = new dat.GUI({
+                width:350
+            });
 
             // add line width
             gui.add(window["settings"],"lineWidth",1,10);
@@ -35,8 +37,8 @@
             let isMouseDown = false;
 
 
-            gui.add(window["settings"],"capsOn").name("Toggle End Caps on line segments")
-            gui.add(window["settings"],"customCap").name("Toggle custom endcaps")
+            gui.add(window["settings"],"capsOn").name("Toggle default line endcaps")
+            gui.add(window["settings"],"customCap").name("Toggle custom line endcaps")
 
             // add line decay rate
             //gui.add(window["settings"],"decayRate",0.0000001,0.01,0.001);
