@@ -55,21 +55,7 @@ class DrawSegment {
             alpha = this.opacity - this.decayRate;
             this.opacity = alpha
 
-            // try to "erase" the lines as the lines are drawn
-            // to attempt to better hide things.
-            setTimeout(()=>{
-                let dx = this.mouse.x - this.mouse.lastX;
-                let dy = this.mouse.y - this.mouse.lastY;
 
-                let dx2 = dx + dx;
-                let dy2 = dy + dy;
-
-                //ctx.clearRect(this.mouse.lastX-(dx2 / 2), this.mouse.lastY - (dy2 / 2), dx2 * 2000, dy2)
-                ctx.clearRect(this.mouse.lastX+(dx2 / 2), this.mouse.lastY + (dy2 / 2), dx2, dy2)
-                ctx.clearRect(this.mouse.lastX-(dx2 / 2), this.mouse.lastY - (dy2 / 2), dx2, dy2)
-                ctx.clearRect(this.mouse.x+(dx2 / 2), this.mouse.y + (dy2 / 2), dx2, dy2)
-                ctx.clearRect(this.mouse.x-(dx2 / 2), this.mouse.y - (dy2 / 2), dx2, dy2)
-            })
         }
 
 
@@ -77,7 +63,21 @@ class DrawSegment {
         let lineWidth = this.settings.lineWidth;
         let fillStyle = this.settings.fillStyle;
         let strokeStyle = this.settings.strokeStyle;
+        // try to "erase" the lines as the lines are drawn
+        // to attempt to better hide things.
+        setTimeout(()=>{
+            let dx = this.mouse.x - this.mouse.lastX;
+            let dy = this.mouse.y - this.mouse.lastY;
 
+            let dx2 = dx + dx;
+            let dy2 = dy + dy;
+
+            //ctx.clearRect(this.mouse.lastX-(dx2 / 2), this.mouse.lastY - (dy2 / 2), dx2 * 2000, dy2)
+            ctx.clearRect(this.mouse.lastX+(dx2 / 2), this.mouse.lastY + (dy2 / 2), dx2, dy2)
+            ctx.clearRect(this.mouse.lastX-(dx2 / 2), this.mouse.lastY - (dy2 / 2), dx2, dy2)
+            ctx.clearRect(this.mouse.x+(dx2 / 2), this.mouse.y + (dy2 / 2), dx2, dy2)
+            ctx.clearRect(this.mouse.x-(dx2 / 2), this.mouse.y - (dy2 / 2), dx2, dy2)
+        })
 
 
         // hiding caps for now
@@ -89,7 +89,8 @@ class DrawSegment {
             ctx.lineJoin = "round"
         }
 
-        //ctx.globalCompositeOperation = "source-over"
+        // reset settings
+        ctx.globalCompositeOperation = "source-over"
         ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity})`
         ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity})`
         ctx.lineWidth = lineWidth;
@@ -109,13 +110,14 @@ class DrawSegment {
         ctx.closePath();
 
         // turn on custom capping if capsOn if off.
-        if(!window["settings"]["capsOn"]){
-            ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity -.28})`
-            ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity-.23})`
-            //ctx.globalCompositeOperation = "screen";
-            ctx.globalCompositeOperation = "multiply"
+        if(window["settings"]["customCap"]){
+            let opac = 0.34;
+            ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity -opac})`
+            ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity-opac})`
+            ctx.globalCompositeOperation = "overlay"
+
             ctx.beginPath();
-            ctx.arc(this.mouse.x,this.mouse.y,(this.settings.lineWidth / 2) + 0.2,0,2 * Math.PI)
+            ctx.arc(this.mouse.x,this.mouse.y,(this.settings.lineWidth / 2),0,2 * Math.PI)
             ctx.fill();
             ctx.closePath();
         }

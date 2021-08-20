@@ -12,7 +12,8 @@
         strokeStyle:"#000",
         lineWidth:4,
         decayRate:0.001,
-        capsOn:false
+        capsOn:false,
+        customCap:true
     }
 
     onMount(()=>{
@@ -35,6 +36,7 @@
 
 
             gui.add(window["settings"],"capsOn").name("Toggle End Caps on line segments")
+            gui.add(window["settings"],"customCap").name("Toggle custom endcaps")
 
             // add line decay rate
             //gui.add(window["settings"],"decayRate",0.0000001,0.01,0.001);
