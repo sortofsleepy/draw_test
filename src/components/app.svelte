@@ -1,7 +1,7 @@
 <main>
 
 
-    <Test6/>
+    <Test7/>
 </main>
 
 <style>
@@ -28,6 +28,7 @@
     import Test3 from "./test3.svelte"
     import Test4 from "./test4.svelte"
     import Test6 from "./test6.svelte"
+    import Test7 from "./test7.svelte"
     import Settings from "./settings.svelte"
     import Content from "./content.svelte"
 

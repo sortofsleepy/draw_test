@@ -32,12 +32,21 @@
         canvas.height = window.innerHeight;
 
         let drawings = [];
+        let rotAngles = [];
 
+        let mouse = {
+            x:0,
+            y:0,
+            lastX:0,
+            lastY:0
+        }
 
         let animate = () => {
             requestAnimationFrame(animate);
 
-           eraser.render(ctx,ctx.lineWidth);
+           eraser.render(ctx,ctx.lineWidth,mouse);
+            mouse.lastX = mouse.x;
+            mouse.lastY = mouse.y;
         }
 
         animate();
@@ -45,14 +54,14 @@
 
         canvas.addEventListener("mousedown", e=> {
             canvas.isDrawing = true;
-            canvas.lastX = e.pageX - canvas.offsetLeft;
-            canvas.lastY = e.pageY - canvas.offsetTop;
 
-            ctx.moveTo(canvas.lastX, canvas.lastY);
+            mouse.lastX = e.pageX - canvas.offsetLeft;
+            mouse.lastY = e.pageY - canvas.offsetTop;
+
+            ctx.moveTo(mouse.lastX, mouse.lastY);
             ctx.beginPath();
             ctx.lineWidth = 30;
-            //ctx.lineJoin = "round";
-            ctx.strokeStyle = "rgba(255,0,0,0.1001)"
+            ctx.strokeStyle = "rgba(255,0,0,1)"
 
 
         })
@@ -66,10 +75,13 @@
             ctx.lineTo(x, y);
             ctx.stroke();
 
+            mouse.x = x;
+            mouse.y = y;
+
             drawings.push([x,y]);
-            canvas.lastX = x;
-            canvas.lastY = y;
+
         })
+
         function lerp(v0, v1, t) {
             return v0*(1-t)+v1*t
         }
@@ -86,7 +98,7 @@
                     let curr = drawings[i];
                     let next = drawings[i + 1];
 
-                    // find all possible values of x and y between current and next
+                    // find as many possible values of x and y between current and next
                     let count = 0;
                     while(count !== 1){
                         let x = lerp(curr[0],next[0],count)
@@ -101,15 +113,22 @@
 
                     }
 
+                    // find rotation angles between each point
+                    let dx = curr[0] - next[0];
+                    let dy = curr[1] - next[1];
+
+                    let rot = Math.atan2(dy,dx);
+                    rotAngles.push(rot);
 
                 }
 
             }
 
 
-            eraser.init(erasePoints)
+            eraser.init(erasePoints,rotAngles)
             eraser.hasPointsToErase = true;
             canvas.isDrawing = false;
+            drawings = [];
 
 
         })
