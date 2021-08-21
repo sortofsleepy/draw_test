@@ -53,7 +53,7 @@ class DrawSegment {
 
         if(this.fade){
             alpha = this.opacity - this.decayRate;
-            this.opacity = alpha
+            //this.opacity = alpha
 
 
         }
@@ -111,16 +111,22 @@ class DrawSegment {
 
         // turn on custom capping if capsOn if off.
         if(window["settings"]["customCap"]){
-            let opac = 0.34;
+
+            let opac = 0.0;
             ctx.fillStyle = `rgba(${this.settings.fillColor[0]},${this.settings.fillColor[1]},${this.settings.fillColor[2]},${this.opacity -opac})`
             ctx.strokeStyle = `rgba(${this.settings.strokeColor[0]},${this.settings.strokeColor[1]},${this.settings.strokeColor[2]},${this.opacity-opac})`
             ctx.globalCompositeOperation = "overlay"
 
             ctx.beginPath();
+
             ctx.arc(this.mouse.x,this.mouse.y,(this.settings.lineWidth / 2),0,2 * Math.PI)
             ctx.fill();
+
+
             ctx.closePath();
         }
+
+        //ctx.globalCompositeOperation = "source-over"
         /*
         ctx.beginPath();
         ctx.arc(this.mouse.x,this.mouse.y,ctx.lineWidth / 2,0,2 * Math.PI)
@@ -132,6 +138,50 @@ class DrawSegment {
     }
 
 }
+
+class Eraser {
+    locations:Array<DrawSegment> = [];
+
+    currentPosition:any = {
+        x:0,
+        y:0
+    }
+    listIndex:number = 0;
+    init(locationList) {
+
+        if(locationList.length > 0){
+            this.locations = locationList;
+
+            this.currentPosition.x = this.locations[0].mouse.x;
+            this.currentPosition.y = this.locations[0].mouse.y;
+        }
+    }
+
+    render(ctx,lineWidth){
+
+        if(this.locations.length > 0){
+
+            ctx.globalCompositeOperation = "source-over"
+            ctx.fillStyle = "rgba(0,0,0,1)"
+            //ctx.clearRect(this.currentPosition.x - 10,this.currentPosition.y - 10,20,20);
+            //ctx.fillRect(this.currentPosition.x - 10,this.currentPosition.y - 10,230,230);
+            ctx.clearRect(this.currentPosition.x - 10,this.currentPosition.y - 10,230,230);
+            this._update();
+        }
+
+
+    }
+
+    _update(){
+        if(this.listIndex + 1 < this.locations.length){
+            this.listIndex += 1;
+            this.currentPosition.x = this.locations[this.listIndex].mouse.x;
+            this.currentPosition.y = this.locations[this.listIndex].mouse.y;
+        }
+    }
+
+}
+
 
 const defaultDecay = 0;
 
@@ -159,7 +209,7 @@ export default class Sketcher {
     }
 
     decayRateSettings:number = defaultDecay;
-
+    eraser:Eraser;
     constructor(el:HTMLCanvasElement) {
 
         this.el = el;
@@ -169,6 +219,8 @@ export default class Sketcher {
         //this.ctx = this.el.getContext("2d",{alpha:false});
         this.ctx = this.el.getContext("2d");
 
+
+        this.eraser = new Eraser()
         this._setupMouseListeners();
     }
 
@@ -195,11 +247,11 @@ export default class Sketcher {
 
             // render all remaining drawings.
             this.drawings.forEach((draw,i) => {
-
                 draw.render(this.ctx);
             });
 
 
+            this.eraser.render(this.ctx,this.styles.lineWidth);
 
             this.mouse.lastX = this.mouse.x;
             this.mouse.lastY = this.mouse.y;
@@ -250,9 +302,6 @@ export default class Sketcher {
 
                 this.drawings.push(segment);
 
-
-
-
             }
 
         });
@@ -299,6 +348,11 @@ export default class Sketcher {
                  */
                 drawing.fade = true;
             })
+
+            console.log(this.drawings);
+
+            this.eraser.init(this.drawings);
+
 
             this.decaySettings = [];
             this.decayRateSettings = defaultDecay;
