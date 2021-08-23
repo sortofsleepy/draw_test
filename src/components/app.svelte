@@ -1,7 +1,12 @@
 <main>
 
 
-    <Test7/>
+    {#if useEraser === true}
+        <EraserTest/>
+    {:else}
+        <Final/>
+    {/if}
+
 </main>
 
 <style>
@@ -28,13 +33,19 @@
     import Test3 from "./test3.svelte"
     import Test4 from "./test4.svelte"
     import Test6 from "./test6.svelte"
-    import Test7 from "./test7.svelte"
+    import EraserTest from "./eraserTest.svelte"
     import Settings from "./settings.svelte"
     import Content from "./content.svelte"
 
 
 
+    let searchParams = new URLSearchParams(window.location.search);
+    const params = Object.fromEntries(searchParams.entries());
 
+    let useEraser = false;
+    if(params.hasOwnProperty("eraser")){
+        useEraser = true;
+    }
 
 
 </script>

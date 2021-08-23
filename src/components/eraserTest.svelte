@@ -38,7 +38,8 @@
             x:0,
             y:0,
             lastX:0,
-            lastY:0
+            lastY:0,
+            direction:""
         }
 
         let lineWidth = 10;
@@ -55,6 +56,7 @@
 
         animate();
         // works if we just lineTo and stroke
+        let oldX = 0;
 
         canvas.addEventListener("mousedown", e=> {
             mouseDown = true;
@@ -69,9 +71,17 @@
             if (!mouseDown) {
                 return;
             }
+
+            if(e.pageX < oldX){
+                mouse.direction = "left";
+            }else{
+                mouse.direction = "right";
+            }
+
             var x = e.pageX - canvas.offsetLeft;
             var y = e.pageY - canvas.offsetTop;
 
+            ctx.lineCap = "round"
             ctx.lineTo(x, y);
             ctx.stroke();
 
@@ -80,6 +90,8 @@
 
 
             drawings.push([x,y]);
+
+            oldX = e.pageX
         })
 
         function lerp(v0, v1, t) {
@@ -116,9 +128,10 @@
                             erasePoints.push({
                                 x:x,
                                 y:y,
-                                angle:rot
+                                angle:rot,
+                                direction:mouse.direction
                             })
-                            count += 0.2;
+                            count += 0.07;
 
                             if(count >= 1){
                                 break;

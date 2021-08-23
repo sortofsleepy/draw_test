@@ -6,6 +6,8 @@ export default class Eraser {
         y:0,
         angle:0
     }
+
+    direction:string = ""
     hasPointsToErase:boolean = false;
     listIndex:number = 0;
     init(locationList) {
@@ -14,6 +16,7 @@ export default class Eraser {
             this.locations = locationList;
             this.listIndex = 0;
             this.hasPointsToErase = true;
+            this.direction = this.locations[0].direction;
             this.currentPosition.x = this.locations[0].x;
             this.currentPosition.y = this.locations[0].y;
             this.currentPosition.angle = this.locations[0].angle;
@@ -28,31 +31,29 @@ export default class Eraser {
 
             ctx.globalCompositeOperation = "source-over"
             ctx.fillStyle = "rgba(0,0,0,0)"
-            let size = lineWidth + 20
-            let sizeHalf = size / 2;
+            let size = lineWidth
+            let sizeHalf = lineWidth / 2;
+
 
 
 
             ctx.save();
-           // ctx.globalCompositeOperation = "destination-out"
+            //ctx.globalCompositeOperation = "destination-out"
 
             ctx.fillStyle = `rgb(${random() * 255},${random() * 255},0)`
+            if(this.direction === "left"){
+                ctx.translate(this.currentPosition.x + sizeHalf,this.currentPosition.y + sizeHalf);
+            }else{
 
-            ctx.translate(this.currentPosition.x - sizeHalf,this.currentPosition.y - sizeHalf);
+                ctx.translate(this.currentPosition.x - sizeHalf,this.currentPosition.y - sizeHalf);
+            }
+
             ctx.rotate(this.currentPosition.angle)
 
-            ctx.clearRect(0,0,30,40);
-            //ctx.fillRect(0,0,30,40);
+            // debug
+            //ctx.fillRect(0,-15,size + 6,size + 30);
+            ctx.clearRect(0,-15,size + 6,size + 30);
             ctx.restore();
-            ctx.clearRect(this.currentPosition.x + sizeHalf,this.currentPosition.y + sizeHalf,size,size);
-
-            ctx.clearRect(this.currentPosition.x - sizeHalf,this.currentPosition.y - sizeHalf,size,size);
-
-            //ctx.clearRect((this.currentPosition.x+20) - sizeHalf,(this.currentPosition.y+20) - sizeHalf,size,size);
-            //ctx.clearRect(this.currentPosition.x - sizeHalf,this.currentPosition.y - sizeHalf,size,size);
-            //ctx.clearRect((this.currentPosition.x-20) - sizeHalf,(this.currentPosition.y-20) - sizeHalf,size,size);
-            //ctx.fillRect(this.currentPosition.x - 10,this.currentPosition.y - 10,230,230);
-            //ctx.clearRect(this.currentPosition.x - 10,this.currentPosition.y - 10,230,230);
             this._update();
         }
 
@@ -60,12 +61,18 @@ export default class Eraser {
     }
 
     _update(){
-        if(this.listIndex + 1 < this.locations.length){
-            this.listIndex += 1;
+        if(this.listIndex + 2 < this.locations.length){
+            this.listIndex += 2;
+
+
+            this.direction = this.locations[this.listIndex].direction;
             this.currentPosition.x = this.locations[this.listIndex].x;
             this.currentPosition.y = this.locations[this.listIndex].y;
             this.currentPosition.angle = this.locations[this.listIndex].angle
+
         }else{
+
+            this.direction = ""
             this.hasPointsToErase = false;
             this.locations = [];
         }
